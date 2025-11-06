@@ -3,6 +3,7 @@
 namespace App\Livewire\Installments;
 
 use App\Models\Installment;
+use App\Services\InstallmentPaymentService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
@@ -12,34 +13,94 @@ use Livewire\Attributes\Title;
 #[Title('Cuotas - Control Finance')]
 class InstallmentList extends Component
 {
-    public function markAsPaid($installmentId)
+    public $showPaymentModal = false;
+    public $selectedInstallment = null;
+    public $paymentAmount = '';
+    public $paymentDate = '';
+    public $suggestedAmount = 0;
+
+    public function openPaymentModal($installmentId)
     {
         try {
-            $installment = Installment::where('id', $installmentId)
+            $this->selectedInstallment = Installment::where('id', $installmentId)
                 ->where('user_id', auth()->id())
                 ->firstOrFail();
 
-            // Incrementar la cuota actual pagada
-            $installment->increment('current_installment');
+            // Calcular monto sugerido
+            $paymentService = new InstallmentPaymentService();
+            $this->suggestedAmount = $paymentService->getSuggestedPaymentAmount($this->selectedInstallment);
+            $this->paymentAmount = number_format($this->suggestedAmount / 100, 2, '.', '');
+            $this->paymentDate = now()->format('Y-m-d');
 
-            // Si completó todas las cuotas, marcar como completado
-            if ($installment->current_installment >= $installment->installment_count) {
-                $installment->update(['status' => Installment::STATUS_COMPLETED]);
+            $this->showPaymentModal = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al abrir el modal de pago: ' . $e->getMessage());
+        }
+    }
+
+    public function closePaymentModal()
+    {
+        $this->showPaymentModal = false;
+        $this->selectedInstallment = null;
+        $this->paymentAmount = '';
+        $this->paymentDate = '';
+        $this->suggestedAmount = 0;
+        $this->resetValidation();
+    }
+
+    public function processPayment()
+    {
+        $this->validate([
+            'paymentAmount' => ['required', 'numeric', 'min:0.01'],
+            'paymentDate' => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'paymentAmount.required' => 'El monto es obligatorio.',
+            'paymentAmount.numeric' => 'El monto debe ser un número válido.',
+            'paymentAmount.min' => 'El monto debe ser mayor a cero.',
+            'paymentDate.required' => 'La fecha es obligatoria.',
+            'paymentDate.date' => 'La fecha debe ser válida.',
+            'paymentDate.before_or_equal' => 'La fecha no puede ser futura.',
+        ]);
+
+        try {
+            $paymentService = new InstallmentPaymentService();
+
+            // Convertir monto a centavos
+            $amountInCents = (int)($this->paymentAmount * 100);
+
+            // Registrar el pago
+            $result = $paymentService->registerPayment(
+                $this->selectedInstallment,
+                $amountInCents,
+                $this->paymentDate
+            );
+
+            // Mensaje de éxito personalizado según el tipo de pago
+            $message = 'Pago registrado exitosamente. ';
+
+            if ($result['is_completed']) {
+                $message .= '¡Plan de cuotas completado!';
+            } elseif ($result['payment_type'] === 'full_installment') {
+                $message .= "Cuota(s) completa(s) pagada(s). Restante: S/ " . number_format($result['remaining_dollars'], 2);
+            } elseif ($result['payment_type'] === 'partial') {
+                $message .= "Pago parcial registrado. Restante: S/ " . number_format($result['remaining_dollars'], 2);
             }
 
-            session()->flash('success', 'Cuota marcada como pagada exitosamente.');
+            session()->flash('success', $message);
 
-            // Refrescar el componente
+            $this->closePaymentModal();
             $this->dispatch('$refresh');
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al marcar la cuota como pagada: ' . $e->getMessage());
+            $this->addError('paymentAmount', $e->getMessage());
         }
     }
 
     public function render()
     {
         // DataTables maneja la paginación, búsqueda y filtrado
+        // Solo mostrar cuotas con productos financieros válidos
         $installments = Installment::where('user_id', auth()->id())
+            ->whereHas('financialProduct') // Solo cuotas con productos válidos
             ->with(['financialProduct'])
             ->orderBy('purchase_date', 'desc')
             ->get();

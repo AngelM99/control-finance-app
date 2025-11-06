@@ -97,6 +97,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all transactions where this user is the lender.
+     */
+    public function lentTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'lender_id');
+    }
+
+    /**
      * Check if user is approved.
      */
     public function isApproved(): bool

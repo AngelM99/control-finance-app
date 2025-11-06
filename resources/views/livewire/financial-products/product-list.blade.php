@@ -67,15 +67,15 @@
                                             </td>
                                             <td class="align-middle text-center">
                                                 @if($product->credit_limit > 0)
-                                                    <span class="text-xs font-weight-bold">${{ number_format($product->credit_limit / 100, 2) }}</span>
+                                                    <span class="text-xs font-weight-bold">S/ {{ number_format($product->credit_limit / 100, 2) }}</span>
                                                 @elseif($product->loan_amount > 0)
-                                                    <span class="text-xs font-weight-bold">${{ number_format($product->loan_amount / 100, 2) }}</span>
+                                                    <span class="text-xs font-weight-bold">S/ {{ number_format($product->loan_amount / 100, 2) }}</span>
                                                 @else
                                                     <span class="text-xs text-secondary">-</span>
                                                 @endif
                                             </td>
                                             <td class="align-middle text-center">
-                                                <span class="text-xs font-weight-bold">${{ number_format($product->current_balance / 100, 2) }}</span>
+                                                <span class="text-xs font-weight-bold">S/ {{ number_format($product->current_balance / 100, 2) }}</span>
                                             </td>
                                             <td class="align-middle text-center">
                                                 @if($product->credit_limit > 0)
@@ -85,7 +85,7 @@
                                                         $colorClass = $percentage > 50 ? 'success' : ($percentage > 25 ? 'warning' : 'danger');
                                                     @endphp
                                                     <span class="text-xs font-weight-bold text-{{ $colorClass }}">
-                                                        ${{ number_format($available / 100, 2) }}
+                                                        S/ {{ number_format($available / 100, 2) }}
                                                     </span>
                                                 @else
                                                     <span class="text-xs text-secondary">-</span>

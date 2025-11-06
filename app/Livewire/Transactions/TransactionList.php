@@ -35,7 +35,9 @@ class TransactionList extends Component
     {
         // DataTables maneja la paginación, búsqueda y filtrado
         // Solo cargamos todos los registros del usuario
+        // Usamos whereHas para filtrar solo transacciones con productos existentes
         $transactions = Transaction::where('user_id', auth()->id())
+            ->whereHas('financialProduct') // Solo transacciones con productos válidos
             ->with(['financialProduct', 'lender'])
             ->latest('transaction_date')
             ->get();

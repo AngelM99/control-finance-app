@@ -5,7 +5,7 @@
                 <div class="card-header pb-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6>Productos Financieros</h6>
-                        @can('create own financial products')
+                        @can('create financial products')
                             <a href="{{ route('products.create') }}" class="btn btn-sm bg-gradient-primary mb-0" wire:navigate>
                                 <i class="fas fa-plus me-2"></i>Nuevo Producto
                             </a>
@@ -56,12 +56,12 @@
                                             </td>
                                             <td class="align-middle text-center">
                                                 <div class="d-flex justify-content-center gap-2">
-                                                    @can('edit own financial products')
+                                                    @can('edit financial products')
                                                         <a href="{{ route('products.edit', $product) }}" class="btn btn-sm btn-outline-primary mb-0" wire:navigate>
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                     @endcan
-                                                    @can('delete own financial products')
+                                                    @can('delete financial products')
                                                         <button wire:click="delete({{ $product->id }})"
                                                                 wire:confirm="¿Está seguro de eliminar este producto?"
                                                                 class="btn btn-sm btn-outline-danger mb-0">
@@ -81,7 +81,7 @@
                     @else
                         <div class="text-center py-4">
                             <p class="text-sm text-secondary mb-3">No tienes productos financieros registrados</p>
-                            @can('create own financial products')
+                            @can('create financial products')
                                 <a href="{{ route('products.create') }}" class="btn bg-gradient-primary" wire:navigate>
                                     <i class="fas fa-plus me-2"></i>Crear Primer Producto
                                 </a>

@@ -23,10 +23,12 @@ class Installment extends Model
         'installment_count',
         'installment_amount',
         'current_installment',
+        'total_paid',
         'description',
         'merchant',
         'purchase_date',
         'first_payment_date',
+        'last_payment_date',
         'status',
         'notes',
         'payment_schedule',
@@ -42,8 +44,10 @@ class Installment extends Model
         'installment_count' => 'integer',
         'installment_amount' => 'integer',
         'current_installment' => 'integer',
+        'total_paid' => 'integer',
         'purchase_date' => 'date',
         'first_payment_date' => 'date',
+        'last_payment_date' => 'date',
         'payment_schedule' => 'array',
     ];
 
@@ -99,7 +103,34 @@ class Installment extends Model
      */
     public function getRemainingAmountAttribute(): int
     {
-        return $this->installment_amount * $this->remaining_installments;
+        return $this->total_amount - ($this->total_paid ?? 0);
+    }
+
+    /**
+     * Get the total paid in dollars.
+     */
+    public function getTotalPaidInDollarsAttribute(): float
+    {
+        return ($this->total_paid ?? 0) / 100;
+    }
+
+    /**
+     * Get the remaining amount in dollars.
+     */
+    public function getRemainingAmountInDollarsAttribute(): float
+    {
+        return $this->remaining_amount / 100;
+    }
+
+    /**
+     * Get payment progress percentage.
+     */
+    public function getPaymentProgressAttribute(): float
+    {
+        if ($this->total_amount == 0) {
+            return 0;
+        }
+        return (($this->total_paid ?? 0) / $this->total_amount) * 100;
     }
 
     /**

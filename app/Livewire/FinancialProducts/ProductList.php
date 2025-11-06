@@ -19,6 +19,20 @@ class ProductList extends Component
                 ->where('user_id', auth()->id())
                 ->firstOrFail();
 
+            // Verificar si tiene transacciones asociadas
+            $transactionsCount = $product->transactions()->count();
+            if ($transactionsCount > 0) {
+                session()->flash('error', "No se puede eliminar este producto porque tiene {$transactionsCount} transacción(es) asociada(s). Primero debes eliminar las transacciones.");
+                return;
+            }
+
+            // Verificar si tiene cuotas asociadas
+            $installmentsCount = $product->installments()->count();
+            if ($installmentsCount > 0) {
+                session()->flash('error', "No se puede eliminar este producto porque tiene {$installmentsCount} plan(es) de cuotas activo(s). Primero debes eliminar o completar las cuotas.");
+                return;
+            }
+
             $product->delete();
 
             session()->flash('success', 'Producto eliminado exitosamente.');

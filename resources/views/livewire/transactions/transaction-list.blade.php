@@ -5,7 +5,7 @@
                 <div class="card-header pb-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6>Transacciones</h6>
-                        @can('create own transactions')
+                        @can('create transactions')
                             <a href="{{ route('transactions.create') }}" class="btn btn-sm bg-gradient-success mb-0" wire:navigate>
                                 <i class="fas fa-plus me-2"></i>Nueva Transacción
                             </a>
@@ -76,12 +76,12 @@
                                             </td>
                                             <td class="align-middle text-center">
                                                 <span class="text-xs font-weight-bold">
-                                                    ${{ number_format($transaction->amount / 100, 2) }}
+                                                    S/ {{ number_format($transaction->amount / 100, 2) }}
                                                 </span>
                                             </td>
                                             <td class="align-middle text-center">
                                                 <div class="d-flex justify-content-center gap-2">
-                                                    @can('edit own transactions')
+                                                    @can('edit transactions')
                                                         <a href="{{ route('transactions.edit', $transaction) }}"
                                                            class="btn btn-sm btn-outline-primary mb-0"
                                                            wire:navigate
@@ -89,7 +89,7 @@
                                                             <i class="fas fa-edit"></i>
                                                         </a>
                                                     @endcan
-                                                    @can('delete own transactions')
+                                                    @can('delete transactions')
                                                         <button wire:click="delete({{ $transaction->id }})"
                                                                 wire:confirm="¿Está seguro de eliminar esta transacción?"
                                                                 class="btn btn-sm btn-outline-danger mb-0"
@@ -107,7 +107,7 @@
                     @else
                         <div class="text-center py-4">
                             <p class="text-sm text-secondary mb-3">No hay transacciones registradas</p>
-                            @can('create own transactions')
+                            @can('create transactions')
                                 <a href="{{ route('transactions.create') }}" class="btn bg-gradient-success" wire:navigate>
                                     <i class="fas fa-plus me-2"></i>Registrar Primera Transacción
                                 </a>

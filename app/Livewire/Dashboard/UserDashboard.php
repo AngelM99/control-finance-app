@@ -38,15 +38,17 @@ class UserDashboard extends Component
         $this->totalBalance = $products->sum('current_balance');
         $this->totalCreditLimit = $products->sum('credit_limit');
 
-        // Load recent transactions
+        // Load recent transactions (solo con productos válidos)
         $this->recentTransactions = Transaction::where('user_id', $userId)
+            ->whereHas('financialProduct') // Filtrar transacciones huérfanas
             ->with('financialProduct')
             ->latest('transaction_date')
             ->limit(10)
             ->get();
 
-        // Load pending installments
+        // Load pending installments (solo con productos válidos)
         $this->pendingInstallments = Installment::where('user_id', $userId)
+            ->whereHas('financialProduct') // Filtrar cuotas huérfanas
             ->where('status', 'active')
             ->count();
 

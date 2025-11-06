@@ -23,7 +23,7 @@ class TransactionForm extends Component
     public $description = '';
     public $reference_number = '';
     public $merchant = '';
-    public $installments_count = 1;
+    public $installments_count = 3; // Valor por defecto: 3 cuotas
     public $pay_in_installments = false;
 
     public function mount($transaction = null)
@@ -31,9 +31,19 @@ class TransactionForm extends Component
         $this->transaction_date = now()->format('Y-m-d');
 
         if ($transaction) {
-            $this->transaction = Transaction::where('id', $transaction)
-                ->where('user_id', auth()->id())
-                ->firstOrFail();
+            // Si $transaction es un objeto Transaction, usarlo directamente
+            // Si es un ID, buscarlo en la base de datos
+            if ($transaction instanceof Transaction) {
+                $this->transaction = $transaction;
+                // Verificar que la transacción pertenece al usuario actual
+                if ($this->transaction->user_id !== auth()->id()) {
+                    abort(403, 'No tienes permiso para editar esta transacción.');
+                }
+            } else {
+                $this->transaction = Transaction::where('id', $transaction)
+                    ->where('user_id', auth()->id())
+                    ->firstOrFail();
+            }
 
             $this->financial_product_id = $this->transaction->financial_product_id;
             $this->lender_id = $this->transaction->lender_id ?? '';
@@ -48,7 +58,7 @@ class TransactionForm extends Component
 
     protected function rules()
     {
-        return [
+        $rules = [
             'financial_product_id' => ['required', 'exists:financial_products,id'],
             'lender_id' => ['nullable', 'exists:lenders,id'],
             'transaction_type' => ['required', 'in:purchase,payment,transfer,withdrawal,deposit,refund,adjustment'],
@@ -58,8 +68,14 @@ class TransactionForm extends Component
             'reference_number' => ['nullable', 'string', 'max:255'],
             'merchant' => ['nullable', 'string', 'max:255'],
             'pay_in_installments' => ['boolean'],
-            'installments_count' => ['nullable', 'integer', 'min:2', 'max:60'],
         ];
+
+        // Solo validar installments_count si pay_in_installments está activo
+        if ($this->pay_in_installments && $this->transaction_type === 'purchase') {
+            $rules['installments_count'] = ['required', 'integer', 'min:2', 'max:60'];
+        }
+
+        return $rules;
     }
 
     public function save()
@@ -76,12 +92,19 @@ class TransactionForm extends Component
             $validated['user_id'] = auth()->id();
 
             // Si no se seleccionó prestamista, dejar como null
-            if (empty($validated['lender_id'])) {
+            // Usar isset y comparación estricta para evitar problemas con valores "0" o false
+            if (!isset($validated['lender_id']) || $validated['lender_id'] === '' || $validated['lender_id'] === null) {
                 $validated['lender_id'] = null;
+            } else {
+                // Asegurar que sea un entero
+                $validated['lender_id'] = (int) $validated['lender_id'];
             }
 
+            // Remover pay_in_installments de los datos validados ya que no es parte del modelo
+            unset($validated['pay_in_installments']);
+
             // Si es en cuotas y el tipo es purchase, agregar installments_count
-            if ($this->pay_in_installments && $this->transaction_type === 'purchase') {
+            if ($this->pay_in_installments && $this->transaction_type === 'purchase' && $this->installments_count > 1) {
                 $validated['installments_count'] = $this->installments_count;
             }
 
@@ -94,8 +117,14 @@ class TransactionForm extends Component
                 $result = $transactionService->createTransaction($validated);
 
                 $message = 'Transacción creada exitosamente.';
-                if ($this->pay_in_installments && $this->transaction_type === 'purchase') {
-                    $message .= " Plan de {$this->installments_count} cuotas creado automáticamente.";
+
+                // Mensaje específico para compras con cuotas
+                if ($this->transaction_type === 'purchase') {
+                    if ($this->pay_in_installments && $this->installments_count > 1) {
+                        $message .= " Plan de {$this->installments_count} cuotas creado automáticamente.";
+                    } else {
+                        $message .= " Se creó como pago único en el próximo ciclo de facturación.";
+                    }
                 }
 
                 session()->flash('success', $message);

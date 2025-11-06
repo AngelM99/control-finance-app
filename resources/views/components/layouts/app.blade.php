@@ -72,6 +72,43 @@
                         </a>
                     </li>
 
+                    {{-- Sección de Reportes --}}
+                    <li class="nav-item mt-2">
+                        <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Reportes</h6>
+                    </li>
+
+                    @can('approve users')
+                    {{-- ADMIN: Reporte Global de Prestamistas --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('reports.borrowers') ? 'active' : '' }}" href="{{ route('reports.borrowers') }}" wire:navigate>
+                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-chart-bar {{ request()->routeIs('reports.borrowers') ? 'text-white' : 'text-dark' }}"></i>
+                            </div>
+                            <span class="nav-link-text ms-1">Reporte Global de Prestamistas</span>
+                        </a>
+                    </li>
+
+                    {{-- ADMIN: Mis Prestamistas (solo admin) --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('reports.my-borrowers') ? 'active' : '' }}" href="{{ route('reports.my-borrowers') }}" wire:navigate>
+                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-users-cog {{ request()->routeIs('reports.my-borrowers') ? 'text-white' : 'text-dark' }}"></i>
+                            </div>
+                            <span class="nav-link-text ms-1">Mis Prestamistas</span>
+                        </a>
+                    </li>
+                    @endcan
+
+                    {{-- COMÚN: Reporte de Transacciones (para todos los usuarios autenticados) --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('reports.transactions') ? 'active' : '' }}" href="{{ route('reports.transactions') }}" wire:navigate>
+                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-file-invoice {{ request()->routeIs('reports.transactions') ? 'text-white' : 'text-dark' }}"></i>
+                            </div>
+                            <span class="nav-link-text ms-1">Reporte de Transacciones</span>
+                        </a>
+                    </li>
+
                     @can('approve users')
                     <li class="nav-item mt-2">
                         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Administración</h6>

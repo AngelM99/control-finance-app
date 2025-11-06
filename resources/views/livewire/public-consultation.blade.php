@@ -241,12 +241,12 @@
                                                     @if($product->credit_limit > 0)
                                                     <div class="col-6">
                                                         <p class="text-xs text-secondary mb-1">Límite de Crédito</p>
-                                                        <p class="text-sm font-weight-bold mb-0">${{ number_format($product->credit_limit_in_dollars, 2) }}</p>
+                                                        <p class="text-sm font-weight-bold mb-0">S/ {{ number_format($product->credit_limit_in_dollars, 2) }}</p>
                                                     </div>
                                                     @endif
                                                     <div class="col-6">
                                                         <p class="text-xs text-secondary mb-1">Saldo Actual</p>
-                                                        <p class="text-sm font-weight-bold mb-0">${{ number_format($product->current_balance_in_dollars, 2) }}</p>
+                                                        <p class="text-sm font-weight-bold mb-0">S/ {{ number_format($product->current_balance_in_dollars, 2) }}</p>
                                                     </div>
                                                 </div>
 
@@ -260,7 +260,7 @@
                                                                     {{ ucfirst($transaction->transaction_type) }}
                                                                 </span>
                                                                 <span class="text-xs font-weight-bold">
-                                                                    ${{ number_format($transaction->amount_in_dollars, 2) }}
+                                                                    S/ {{ number_format($transaction->amount_in_dollars, 2) }}
                                                                 </span>
                                                             </div>
                                                         @endforeach
@@ -371,7 +371,7 @@
                                                     <div class="col-6">
                                                         <p class="text-xs text-secondary mb-1">Monto</p>
                                                         <p class="text-sm font-weight-bold mb-0 text-{{ $color }}">
-                                                            ${{ number_format($transaction->amount / 100, 2) }}
+                                                            S/ {{ number_format($transaction->amount / 100, 2) }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -409,7 +409,7 @@
                                                 <strong>Total de transacciones:</strong>
                                             </p>
                                             <p class="text-lg font-weight-bold mb-0">
-                                                ${{ number_format($transactions->sum('amount') / 100, 2) }}
+                                                S/ {{ number_format($transactions->sum('amount') / 100, 2) }}
                                             </p>
                                         </div>
                                     </div>

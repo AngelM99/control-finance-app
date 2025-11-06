@@ -9,7 +9,7 @@
                         <div>
                             <h6 class="mb-0">Activos</h6>
                             <p class="text-sm mb-0 font-weight-bold">{{ $summary['active_count'] }}</p>
-                            <p class="text-xs text-secondary mb-0">${{ number_format($summary['active_amount'] / 100, 2) }}</p>
+                            <p class="text-xs text-secondary mb-0">S/ {{ number_format($summary['active_amount'] / 100, 2) }}</p>
                         </div>
                     </div>
                 </div>
@@ -27,7 +27,7 @@
                         <i class="fas fa-dollar-sign text-primary fa-2x me-3"></i>
                         <div>
                             <h6 class="mb-0">Total</h6>
-                            <p class="text-sm mb-0 font-weight-bold">${{ number_format($summary['total_amount'] / 100, 2) }}</p>
+                            <p class="text-sm mb-0 font-weight-bold">S/ {{ number_format($summary['total_amount'] / 100, 2) }}</p>
                         </div>
                     </div>
                 </div>
@@ -91,8 +91,8 @@
                                                 </div>
                                             </td>
                                             <td class="align-middle text-center">
-                                                <span class="text-xs font-weight-bold">${{ number_format($installment->installment_amount / 100, 2) }}</span>
-                                                <p class="text-xxs text-secondary mb-0">Total: ${{ number_format($installment->total_amount / 100, 2) }}</p>
+                                                <span class="text-xs font-weight-bold">S/ {{ number_format($installment->installment_amount / 100, 2) }}</span>
+                                                <p class="text-xxs text-secondary mb-0">Total: S/ {{ number_format($installment->total_amount / 100, 2) }}</p>
                                             </td>
                                             <td class="align-middle text-center">
                                                 <p class="text-xs font-weight-bold mb-0">
@@ -113,12 +113,16 @@
                                             <td class="align-middle text-center">
                                                 <div class="d-flex justify-content-center gap-2">
                                                     @if($installment->status === 'active')
-                                                        <button wire:click="markAsPaid({{ $installment->id }})"
-                                                                wire:confirm="¿Marcar una cuota como pagada?"
+                                                        <button wire:click="openPaymentModal({{ $installment->id }})"
                                                                 class="btn btn-sm bg-gradient-success mb-0"
-                                                                title="Pagar cuota">
-                                                            <i class="fas fa-check me-1"></i>Pagar
+                                                                title="Registrar pago">
+                                                            <i class="fas fa-dollar-sign me-1"></i>Pagar
                                                         </button>
+                                                    @endif
+                                                    @if($installment->status === 'completed')
+                                                        <span class="text-xs text-success">
+                                                            <i class="fas fa-check-circle"></i> Pagado
+                                                        </span>
                                                     @endif
                                                 </div>
                                             </td>
@@ -193,5 +197,114 @@
             }
         </script>
         @endpush
+    @endif
+
+    <!-- Payment Modal -->
+    @if($showPaymentModal && $selectedInstallment)
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.7); z-index: 9999; position: fixed; top: 0; left: 0; width: 100%; height: 100%;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="z-index: 10000;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-dollar-sign me-2"></i>Registrar Pago
+                    </h5>
+                    <button type="button" class="btn-close" wire:click="closePaymentModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Installment Details -->
+                    <div class="card card-body border mb-3">
+                        <h6 class="text-sm font-weight-bold mb-2">{{ $selectedInstallment->financialProduct?->name ?? 'N/A' }}</h6>
+                        <p class="text-xs text-secondary mb-1">{{ $selectedInstallment->description ?? 'Compra en cuotas' }}</p>
+                        <hr class="horizontal dark my-2">
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="text-xs mb-1">Total:</p>
+                                <p class="text-sm font-weight-bold mb-0">S/ {{ number_format($selectedInstallment->total_amount / 100, 2) }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-xs mb-1">Pagado:</p>
+                                <p class="text-sm font-weight-bold text-success mb-0">S/ {{ number_format(($selectedInstallment->total_paid ?? 0) / 100, 2) }}</p>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <p class="text-xs mb-1">Restante:</p>
+                                <p class="text-sm font-weight-bold text-warning mb-0">S/ {{ number_format($selectedInstallment->remaining_amount / 100, 2) }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-xs mb-1">Cuotas:</p>
+                                <p class="text-sm font-weight-bold mb-0">{{ $selectedInstallment->current_installment }} / {{ $selectedInstallment->installment_count }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form wire:submit.prevent="processPayment">
+                        <div class="mb-3">
+                            <label for="paymentDate" class="form-label text-sm">Fecha de Pago</label>
+                            <input type="date"
+                                   class="form-control @error('paymentDate') is-invalid @enderror"
+                                   id="paymentDate"
+                                   wire:model.defer="paymentDate"
+                                   max="{{ date('Y-m-d') }}">
+                            @error('paymentDate')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="paymentAmount" class="form-label text-sm">
+                                Monto a Pagar
+                                <span class="text-xs text-secondary">(Sugerido: S/ {{ number_format($suggestedAmount / 100, 2) }})</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">S/</span>
+                                <input type="number"
+                                       class="form-control @error('paymentAmount') is-invalid @enderror"
+                                       id="paymentAmount"
+                                       wire:model.defer="paymentAmount"
+                                       step="0.01"
+                                       min="0.01"
+                                       max="{{ number_format($selectedInstallment->remaining_amount / 100, 2, '.', '') }}"
+                                       placeholder="0.00">
+                                @error('paymentAmount')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <small class="text-xs text-secondary">
+                                Puede pagar el monto completo, una cuota, o un pago parcial.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info text-xs py-2 mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            El monto sugerido corresponde a
+                            @if($selectedInstallment->remaining_amount <= $selectedInstallment->installment_amount)
+                                el saldo total restante.
+                            @else
+                                @php
+                                    $totalPaid = $selectedInstallment->total_paid ?? 0;
+                                    $partialAmount = $totalPaid % $selectedInstallment->installment_amount;
+                                @endphp
+                                @if($partialAmount > 0)
+                                    completar la cuota actual.
+                                @else
+                                    una cuota completa.
+                                @endif
+                            @endif
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" wire:click="closePaymentModal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn bg-gradient-success btn-sm" wire:click="processPayment">
+                        <i class="fas fa-check me-1"></i>Registrar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     @endif
 </div>

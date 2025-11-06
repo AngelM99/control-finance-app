@@ -18,6 +18,13 @@ class LenderList extends Component
                 ->where('user_id', auth()->id())
                 ->firstOrFail();
 
+            // Verificar si tiene transacciones asociadas
+            $transactionsCount = $lender->transactions()->count();
+            if ($transactionsCount > 0) {
+                session()->flash('error', "No se puede eliminar este prestamista porque tiene {$transactionsCount} transacción(es) asociada(s). Primero debes eliminar o reasignar las transacciones.");
+                return;
+            }
+
             $lender->delete();
 
             session()->flash('success', 'Prestamista eliminado exitosamente.');

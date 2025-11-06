@@ -59,7 +59,7 @@
                                    data-bs-toggle="tooltip"
                                    title="Saldo Total">Saldo Total</p>
                                 <h5 class="font-weight-bolder mb-0">
-                                    ${{ number_format($totalBalance / 100, 2) }}
+                                    S/ {{ number_format($totalBalance / 100, 2) }}
                                 </h5>
                             </div>
                         </div>
@@ -147,13 +147,13 @@
                                     <div>
                                         <p class="text-xs text-secondary mb-1">Balance del Período</p>
                                         <p class="text-sm font-weight-bold mb-0">
-                                            ${{ number_format($summary['period_balance'] / 100, 2) }}
+                                            S/ {{ number_format($summary['period_balance'] / 100, 2) }}
                                         </p>
                                     </div>
                                     <div class="text-end">
                                         <p class="text-xs text-secondary mb-1">Disponible</p>
                                         <p class="text-sm font-weight-bold mb-0 text-success">
-                                            ${{ number_format($summary['available_credit'] / 100, 2) }}
+                                            S/ {{ number_format($summary['available_credit'] / 100, 2) }}
                                         </p>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="text-xs">Límite de Crédito</span>
-                                    <span class="text-xs font-weight-bold">${{ number_format($product->credit_limit / 100, 2) }}</span>
+                                    <span class="text-xs font-weight-bold">S/ {{ number_format($product->credit_limit / 100, 2) }}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;">
                                     <div class="progress-bar bg-gradient-{{ $progressColor }}"
@@ -219,7 +219,7 @@
                                                 <span class="badge badge-sm bg-gradient-info">{{ ucfirst($transaction->transaction_type) }}</span>
                                             </td>
                                             <td class="align-middle text-center">
-                                                <span class="text-xs font-weight-bold">${{ number_format($transaction->amount / 100, 2) }}</span>
+                                                <span class="text-xs font-weight-bold">S/ {{ number_format($transaction->amount / 100, 2) }}</span>
                                             </td>
                                         </tr>
                                     @endforeach

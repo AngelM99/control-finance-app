@@ -34,14 +34,15 @@ class AdminDashboard extends Component
         // Load product stats
         $this->totalProducts = FinancialProduct::count();
 
-        // Load transaction stats
-        $this->totalTransactions = Transaction::count();
+        // Load transaction stats (solo transacciones válidas)
+        $this->totalTransactions = Transaction::whereHas('financialProduct')->count();
 
         // Load recent users
         $this->recentUsers = User::latest()->limit(5)->get();
 
-        // Load recent transactions
-        $this->recentTransactions = Transaction::with(['user', 'financialProduct'])
+        // Load recent transactions (solo con productos válidos)
+        $this->recentTransactions = Transaction::whereHas('financialProduct') // Filtrar huérfanas
+            ->with(['user', 'financialProduct'])
             ->latest('transaction_date')
             ->limit(10)
             ->get();

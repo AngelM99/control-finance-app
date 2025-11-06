@@ -43,6 +43,7 @@ class TransactionService
             $transaction = Transaction::create([
                 'user_id' => $data['user_id'],
                 'financial_product_id' => $data['financial_product_id'],
+                'lender_id' => $data['lender_id'] ?? null,
                 'transaction_type' => $data['transaction_type'],
                 'amount' => $data['amount'],
                 'transaction_date' => $data['transaction_date'],
@@ -151,9 +152,11 @@ class TransactionService
         // Actualizar balance del producto financiero
         $this->updateProductBalance($product, $data['transaction_type'], $data['amount']);
 
-        // Si es en cuotas, crear el plan de installments
-        if (!empty($data['installments_count']) && $data['installments_count'] > 1 && $data['transaction_type'] === 'purchase') {
-            $this->createInstallmentPlan($transaction, $data, $product);
+        // Para compras con tarjeta de crédito, SIEMPRE crear un plan de cuotas
+        // Si no se especificó installments_count, crear como pago único (1 cuota)
+        if ($data['transaction_type'] === 'purchase' && ($product->isCreditCard() || $product->isCreditLine())) {
+            $installmentsCount = $data['installments_count'] ?? 1;
+            $this->createInstallmentPlan($transaction, array_merge($data, ['installments_count' => $installmentsCount]), $product);
         }
     }
 
@@ -303,6 +306,7 @@ class TransactionService
             // Actualizar la transacción
             $transaction->update([
                 'financial_product_id' => $data['financial_product_id'],
+                'lender_id' => $data['lender_id'] ?? null,
                 'transaction_type' => $data['transaction_type'],
                 'amount' => $data['amount'],
                 'transaction_date' => $data['transaction_date'],
@@ -357,8 +361,22 @@ class TransactionService
     public function deleteTransaction(Transaction $transaction): void
     {
         DB::transaction(function () use ($transaction) {
-            // Revertir balance
+            // Revertir balance del producto financiero
             $this->revertProductBalance($transaction);
+
+            // Buscar si hay cuotas asociadas a esta transacción específica
+            // Nota: Las cuotas se relacionan por financial_product_id y fecha/monto,
+            // no hay relación directa con transaction_id
+            // Por seguridad, buscamos cuotas con el mismo monto y fecha cercana
+            $installments = Installment::where('financial_product_id', $transaction->financial_product_id)
+                ->where('total_amount', $transaction->amount)
+                ->whereDate('purchase_date', $transaction->transaction_date)
+                ->get();
+
+            // Eliminar cuotas asociadas si las encuentra
+            foreach ($installments as $installment) {
+                $installment->delete();
+            }
 
             // Eliminar la transacción
             $transaction->delete();

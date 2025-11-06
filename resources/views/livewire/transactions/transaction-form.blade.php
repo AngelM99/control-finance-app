@@ -37,7 +37,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Tipo de Transacción</label>
                                 <select class="form-select @error('transaction_type') is-invalid @enderror"
-                                        wire:model="transaction_type">
+                                        wire:model.live="transaction_type">
                                     <option value="">Seleccionar tipo</option>
                                     <option value="purchase">Compra</option>
                                     <option value="payment">Pago</option>
@@ -58,7 +58,7 @@
                                        title="Selecciona quién realizó esta transacción"></i>
                                 </label>
                                 <select class="form-select @error('lender_id') is-invalid @enderror"
-                                        wire:model="lender_id">
+                                        wire:model.defer="lender_id">
                                     <option value="">Yo mismo (propietario)</option>
                                     @foreach($lenders as $lender)
                                         <option value="{{ $lender->id }}">
@@ -158,19 +158,19 @@
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Número de Cuotas</label>
-                                        <select class="form-select @error('installments_count') is-invalid @enderror"
-                                                wire:model.live="installments_count">
-                                            <option value="3">3 cuotas</option>
-                                            <option value="6">6 cuotas</option>
-                                            <option value="9">9 cuotas</option>
-                                            <option value="12">12 cuotas</option>
-                                            <option value="18">18 cuotas</option>
-                                            <option value="24">24 cuotas</option>
-                                            <option value="36">36 cuotas</option>
-                                        </select>
+                                        <input type="number"
+                                               class="form-control @error('installments_count') is-invalid @enderror"
+                                               wire:model.live="installments_count"
+                                               min="2"
+                                               max="60"
+                                               step="1"
+                                               placeholder="Ej: 3, 6, 12, 24...">
                                         @error('installments_count')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i> Ingresa entre 2 y 60 cuotas
+                                        </small>
                                     </div>
 
                                     @if($amount > 0 && $installments_count > 0)
@@ -183,7 +183,7 @@
                                                        readonly>
                                             </div>
                                             <small class="text-muted">
-                                                Total: ${{ number_format($amount, 2) }} en {{ $installments_count }} cuotas
+                                                Total: S/ {{ number_format($amount, 2) }} en {{ $installments_count }} cuotas
                                             </small>
                                         </div>
                                     @endif

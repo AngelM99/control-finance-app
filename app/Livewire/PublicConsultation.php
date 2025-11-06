@@ -124,8 +124,9 @@ class PublicConsultation extends Component
             return;
         }
 
-        // Cargar transacciones del prestamista
+        // Cargar transacciones del prestamista (solo con productos válidos)
         $this->transactions = Transaction::where('lender_id', $this->lender->id)
+            ->whereHas('financialProduct') // Filtrar transacciones huérfanas
             ->with(['financialProduct', 'financialProduct.user'])
             ->latest('transaction_date')
             ->get();

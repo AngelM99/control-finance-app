@@ -165,7 +165,7 @@
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column align-items-end">
-                                        <span class="text-dark font-weight-bold text-sm">${{ number_format($transaction->amount / 100, 2) }}</span>
+                                        <span class="text-dark font-weight-bold text-sm">S/ {{ number_format($transaction->amount / 100, 2) }}</span>
                                         <span class="text-xs text-secondary">{{ $transaction->transaction_date->format('d/m/Y') }}</span>
                                     </div>
                                 </div>
