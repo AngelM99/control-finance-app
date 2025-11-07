@@ -16,10 +16,44 @@
                         </div>
                     @enderror
 
+                    <!-- Contenedor de alertas -->
+                    <div id="alert-container" class="mb-3"></div>
+
                     <form wire:submit="save">
                         <div class="row">
+                            <!-- DNI / Documento con Búsqueda -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">DNI / Documento de Identidad <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text"
+                                           class="form-control @error('document_id') is-invalid @enderror"
+                                           wire:model="document_id"
+                                           placeholder="12345678"
+                                           maxlength="8">
+                                    <button type="button"
+                                            class="btn btn-outline-primary mb-0"
+                                            wire:click="searchDni"
+                                            wire:loading.attr="disabled"
+                                            wire:target="searchDni"
+                                            title="Buscar datos del DNI en SUNAT">
+                                        <span wire:loading.remove wire:target="searchDni">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </span>
+                                        <span wire:loading wire:target="searchDni">
+                                            <span class="spinner-border spinner-border-sm"></span> Buscando...
+                                        </span>
+                                    </button>
+                                </div>
+                                @error('document_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Ingrese el DNI y haga clic en "Buscar" para autocompletar el nombre
+                                </small>
+                            </div>
+
                             <!-- Nombre Completo -->
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Nombre Completo <span class="text-danger">*</span></label>
                                 <input type="text"
                                        class="form-control @error('full_name') is-invalid @enderror"
@@ -28,18 +62,9 @@
                                 @error('full_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
-
-                            <!-- DNI / Documento -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">DNI / Documento de Identidad <span class="text-danger">*</span></label>
-                                <input type="text"
-                                       class="form-control @error('document_id') is-invalid @enderror"
-                                       wire:model="document_id"
-                                       placeholder="12345678">
-                                @error('document_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Se completará automáticamente al buscar el DNI
+                                </small>
                             </div>
 
                             <!-- Teléfono -->
@@ -116,4 +141,63 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        // Escuchar el evento de alertas de Livewire
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('show-alert', (data) => {
+                const alertData = Array.isArray(data) ? data[0] : data;
+                showAlert(alertData.type, alertData.message);
+            });
+        });
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alert-container');
+
+            // Mapeo de tipos a clases de Bootstrap
+            const alertTypes = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            };
+
+            // Mapeo de iconos
+            const icons = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+
+            const alertClass = alertTypes[type] || 'alert-info';
+            const icon = icons[type] || 'fa-info-circle';
+
+            // Crear el HTML de la alerta
+            const alertHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${icon} me-2"></i>
+                    <strong>${message}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            // Limpiar alertas anteriores
+            container.innerHTML = '';
+
+            // Agregar la nueva alerta
+            container.innerHTML = alertHTML;
+
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                const alert = container.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+    </script>
+    @endpush
 </div>
