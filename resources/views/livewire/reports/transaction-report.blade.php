@@ -9,7 +9,7 @@
                     <!-- Filters -->
                     <div class="px-4 py-3 border-bottom">
                         <div class="row align-items-end">
-                            <div class="col-md-3">
+                            <div class="col-12 col-md-3 mb-3 mb-md-0">
                                 <label class="form-label">Prestamista</label>
                                 <select wire:model="selectedBorrower" class="form-select">
                                     <option value="">Todos los prestamistas</option>
@@ -18,15 +18,15 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-12 col-md-2 mb-3 mb-md-0">
                                 <label class="form-label">Fecha Desde</label>
                                 <input type="date" wire:model="dateFrom" class="form-control">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-12 col-md-2 mb-3 mb-md-0">
                                 <label class="form-label">Fecha Hasta</label>
                                 <input type="date" wire:model="dateTo" class="form-control">
                             </div>
-                            <div class="col-md-5 text-end">
+                            <div class="col-12 col-md-5 text-md-end text-center">
                                 <button wire:click="applyFilters" class="btn btn-primary btn-sm">
                                     <i class="fas fa-search"></i> Buscar
                                 </button>
@@ -115,11 +115,11 @@
                                     </td>
                                     <td class="align-middle text-center">
                                         @if($transaction->installment_count > 0)
-                                            <button wire:click="openInstallmentDetail({{ $transaction->id }})" class="btn btn-sm btn-primary mb-0" title="Ver Detalle de Cuotas">
+                                            <button type="button" wire:click.prevent="openInstallmentDetail({{ $transaction->id }})" class="btn btn-sm btn-primary mb-0 me-1" title="Ver Detalle de Cuotas">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         @endif
-                                        <button wire:click="exportTransactionPdf({{ $transaction->id }})" class="btn btn-sm btn-success mb-0" title="Exportar PDF">
+                                        <button type="button" wire:click.prevent="exportTransactionPdf({{ $transaction->id }})" class="btn btn-sm btn-success mb-0" title="Exportar PDF">
                                             <i class="fas fa-file-pdf"></i>
                                         </button>
                                     </td>
@@ -264,11 +264,11 @@
                 </div>
                 <div class="modal-footer">
                     @if($selectedTransaction && $installmentDetails)
-                    <button wire:click="exportTransactionPdf({{ $selectedTransaction->id }})" class="btn btn-success btn-sm">
+                    <button type="button" wire:click.prevent="exportTransactionPdf({{ $selectedTransaction->id }})" class="btn btn-success btn-sm">
                         <i class="fas fa-file-pdf me-1"></i> Exportar PDF
                     </button>
                     @endif
-                    <button type="button" class="btn btn-secondary btn-sm" wire:click="closeInstallmentModal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" wire:click.prevent="closeInstallmentModal">Cerrar</button>
                 </div>
             </div>
         </div>
