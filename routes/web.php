@@ -16,6 +16,7 @@ use App\Livewire\Lenders\LenderForm;
 use App\Livewire\Reports\BorrowerReport;
 use App\Livewire\Reports\MyBorrowers;
 use App\Livewire\Reports\TransactionReport;
+use App\Livewire\Reports\AccountStatementReport;
 use App\Livewire\Admin\PendingUsers;
 use App\Livewire\TestComponent;
 use Illuminate\Support\Facades\Route;
@@ -111,6 +112,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/reportes/prestamistas', BorrowerReport::class)->name('reports.borrowers')->middleware('role:Administrador');
     Route::get('/mis-prestamistas', MyBorrowers::class)->name('reports.my-borrowers')->middleware('role:Administrador');
     Route::get('/reporte-transacciones', TransactionReport::class)->name('reports.transactions');
+    Route::get('/reporte-estado-cuenta', AccountStatementReport::class)->name('reports.account-statement');
 
     // Test
     Route::get('/test-livewire', TestComponent::class)->name('test.livewire');

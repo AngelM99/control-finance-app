@@ -9,7 +9,9 @@
       "Bash(find:*)",
       "Bash(echo:*)",
       "Bash(docker-compose logs:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(php artisan:*)",
+      "Bash(php -l:*)"
     ],
     "deny": [],
     "ask": []
