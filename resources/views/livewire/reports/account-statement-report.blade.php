@@ -169,8 +169,8 @@
                                 <div class="card-header pb-0">
                                     <div class="d-flex justify-content-between">
                                         <div>
-                                            <h6 class="text-sm mb-1">{{ $item['installment']->financialProduct->name }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ $item['installment']->description }}</p>
+                                            <h6 class="text-sm mb-1 font-weight-bold">{{ $item['installment']->description }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ $item['installment']->financialProduct->name }}</p>
                                         </div>
                                         <div class="text-end">
                                             <p class="text-xs text-secondary mb-0">Total a pagar en período:</p>

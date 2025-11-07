@@ -84,8 +84,8 @@
     <div class="installment-card">
         <div class="installment-header">
             <div class="installment-title">
-                {{ $item['installment']->financialProduct->name }}<br>
-                <span style="font-size: 8px; color: #666;">{{ $item['installment']->description }}</span>
+                <strong>{{ $item['installment']->description }}</strong><br>
+                <span style="font-size: 8px; color: #666;">{{ $item['installment']->financialProduct->name }}</span>
             </div>
             <div class="installment-total">
                 Total: S/ {{ number_format($item['total_due'] / 100, 2) }}
