@@ -95,10 +95,10 @@
                                 <tr>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fecha</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prestamista</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tarjeta</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Descripción</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Monto</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cuotas</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estado</th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acciones</th>
                                 </tr>
                             </thead>
@@ -117,24 +117,58 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ $transaction->financialProduct->name ?? 'N/A' }}</p>
-                                        <p class="text-xs text-secondary mb-0">{{ $transaction->financialProduct->institution ?? '' }}</p>
-                                    </td>
-                                    <td>
                                         <p class="text-xs mb-0">{{ \Illuminate\Support\Str::limit($transaction->description, 50) }}</p>
+                                        <p class="text-xs text-secondary mb-0">{{ $transaction->financialProduct->name ?? 'N/A' }}</p>
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         <span class="text-xs font-weight-bold">S/ {{ number_format($transaction->amount / 100, 2) }}</span>
                                     </td>
-                                    <td class="align-middle text-center">
-                                        @if($transaction->installment_count > 0)
-                                            <span class="badge badge-sm bg-gradient-info">{{ $transaction->installment_count }} cuotas</span>
+                                    <td class="align-middle">
+                                        @if($transaction->installment_progress['total'] > 0)
+                                            <div class="px-2">
+                                                <div class="d-flex align-items-center justify-content-center mb-1">
+                                                    <span class="text-xs font-weight-bold">
+                                                        {{ $transaction->installment_progress['paid'] }}/{{ $transaction->installment_progress['total'] }} pagadas
+                                                    </span>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    @php
+                                                        $percentage = $transaction->installment_progress['percentage'];
+                                                        $progressClass = 'bg-secondary';
+                                                        if ($percentage >= 100) {
+                                                            $progressClass = 'bg-success';
+                                                        } elseif ($percentage > 0) {
+                                                            $progressClass = 'bg-warning';
+                                                        }
+                                                    @endphp
+                                                    <div class="progress-bar {{ $progressClass }}" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <div class="text-center mt-1">
+                                                    <span class="text-xxs text-secondary">{{ $percentage }}%</span>
+                                                </div>
+                                            </div>
                                         @else
-                                            <span class="badge badge-sm bg-gradient-secondary">Sin cuotas</span>
+                                            <div class="text-center">
+                                                <span class="text-xs text-secondary">Sin cuotas</span>
+                                            </div>
                                         @endif
                                     </td>
                                     <td class="align-middle text-center">
-                                        @if($transaction->installment_count > 0)
+                                        @php
+                                            $status = $transaction->installment_progress['status'];
+                                        @endphp
+                                        @if($status === 'pagado')
+                                            <span class="badge badge-sm bg-gradient-success">Pagado</span>
+                                        @elseif($status === 'en_progreso')
+                                            <span class="badge badge-sm bg-gradient-warning">En Progreso</span>
+                                        @elseif($status === 'sin_cuotas')
+                                            <span class="badge badge-sm bg-gradient-info">Sin Cuotas</span>
+                                        @else
+                                            <span class="badge badge-sm bg-gradient-danger">Pendiente</span>
+                                        @endif
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        @if($transaction->installment_progress['total'] > 0)
                                             <button type="button" wire:click.prevent="openInstallmentDetail({{ $transaction->id }})" class="btn btn-sm btn-primary mb-0 me-1" title="Ver Detalle de Cuotas">
                                                 <i class="fas fa-eye"></i>
                                             </button>

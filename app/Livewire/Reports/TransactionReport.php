@@ -228,6 +228,53 @@ class TransactionReport extends Component
         return $query->orderBy('transaction_date', 'desc')->get();
     }
 
+    private function calculateInstallmentProgress($transaction)
+    {
+        // Buscar el plan de cuotas asociado
+        $installment = Installment::where('financial_product_id', $transaction->financial_product_id)
+            ->where('purchase_date', $transaction->transaction_date)
+            ->where('total_amount', $transaction->amount)
+            ->first();
+
+        // Si no tiene plan de cuotas asociado, es una transacción sin cuotas
+        if (!$installment) {
+            return [
+                'paid' => 0,
+                'total' => 0,
+                'percentage' => 0,
+                'status' => 'sin_cuotas'
+            ];
+        }
+
+        $totalPaid = $installment->total_paid ?? 0;
+        $installmentAmount = $installment->installment_amount;
+        $totalInstallments = $installment->installment_count;
+
+        // Calcular cuántas cuotas completas se han pagado
+        // Solo contar como cuota pagada si se ha pagado el monto completo de la cuota
+        $paidInstallments = 0;
+        if ($installmentAmount > 0 && $totalPaid > 0) {
+            $paidInstallments = floor($totalPaid / $installmentAmount);
+        }
+
+        $percentage = $totalInstallments > 0 ? round(($paidInstallments / $totalInstallments) * 100) : 0;
+
+        // Determinar estado
+        $status = 'pendiente';
+        if ($paidInstallments >= $totalInstallments) {
+            $status = 'pagado';
+        } elseif ($paidInstallments > 0) {
+            $status = 'en_progreso';
+        }
+
+        return [
+            'paid' => $paidInstallments,
+            'total' => $totalInstallments,
+            'percentage' => $percentage,
+            'status' => $status
+        ];
+    }
+
     public function render()
     {
         // Obtener lista de prestamistas registrados del usuario autenticado
@@ -239,11 +286,18 @@ class TransactionReport extends Component
         // Obtener transacciones filtradas
         $transactions = $this->getFilteredTransactions();
 
+        // Agregar información de progreso de cuotas a cada transacción
+        $transactions->each(function ($transaction) {
+            $transaction->installment_progress = $this->calculateInstallmentProgress($transaction);
+        });
+
         // Calcular estadísticas
         $stats = [
             'total_transactions' => $transactions->count(),
             'total_amount' => $transactions->sum('amount'),
-            'with_installments' => $transactions->where('installment_count', '>', 0)->count(),
+            'with_installments' => $transactions->filter(function ($transaction) {
+                return $transaction->installment_progress['total'] > 0;
+            })->count(),
         ];
 
         return view('livewire.reports.transaction-report', [
