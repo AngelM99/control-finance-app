@@ -1,4 +1,24 @@
 <div>
+    <!-- Loading Overlay - Controlado por JS -->
+    <div id="pdfLoadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(0, 0, 0, 0.7); z-index: 9999; display: none !important;">
+        <div class="text-center">
+            <i class="fas fa-file-pdf text-light mb-3" style="font-size: 3rem; animation: pdfBlink 2s ease-in-out infinite;"></i>
+            <h5 class="text-white">Generando PDF...</h5>
+            <p class="text-white-50">Por favor espere mientras se procesa el documento</p>
+        </div>
+    </div>
+
+    <style>
+        @keyframes pdfBlink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
@@ -63,7 +83,7 @@
 
                     <!-- Export Button -->
                     <div class="px-4 py-3">
-                        <button wire:click="exportFullReportPdf" class="btn btn-success btn-sm">
+                        <button onclick="showPdfOverlay()" wire:click="exportFullReportPdf" class="btn btn-success btn-sm" id="btnExportFullReport">
                             <i class="fas fa-file-pdf"></i> Exportar Reporte Completo PDF
                         </button>
                     </div>
@@ -119,7 +139,7 @@
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         @endif
-                                        <button type="button" wire:click.prevent="exportTransactionPdf({{ $transaction->id }})" class="btn btn-sm btn-success mb-0" title="Exportar PDF">
+                                        <button type="button" onclick="showPdfOverlay()" wire:click.prevent="exportTransactionPdf({{ $transaction->id }})" class="btn btn-sm btn-success mb-0" title="Exportar PDF">
                                             <i class="fas fa-file-pdf"></i>
                                         </button>
                                     </td>
@@ -264,7 +284,7 @@
                 </div>
                 <div class="modal-footer">
                     @if($selectedTransaction && $installmentDetails)
-                    <button type="button" wire:click.prevent="exportTransactionPdf({{ $selectedTransaction->id }})" class="btn btn-success btn-sm">
+                    <button type="button" onclick="showPdfOverlay()" wire:click.prevent="exportTransactionPdf({{ $selectedTransaction->id }})" class="btn btn-success btn-sm">
                         <i class="fas fa-file-pdf me-1"></i> Exportar PDF
                     </button>
                     @endif
@@ -277,9 +297,37 @@
 
     @push('scripts')
     <script>
+        // Función para mostrar el overlay de carga
+        function showPdfOverlay() {
+            const overlay = document.getElementById('pdfLoadingOverlay');
+            if (overlay) {
+                overlay.style.setProperty('display', 'flex', 'important');
+            }
+        }
+
+        // Función para ocultar el overlay de carga
+        function hidePdfOverlay() {
+            const overlay = document.getElementById('pdfLoadingOverlay');
+            if (overlay) {
+                overlay.style.setProperty('display', 'none', 'important');
+            }
+        }
+
         document.addEventListener('livewire:init', () => {
             Livewire.on('filtersApplied', () => {
                 console.log('Filters applied');
+            });
+
+            // Ocultar overlay después de que se complete la descarga
+            // El overlay se ocultará después de 3 segundos de mostrado
+            let overlayTimer;
+            window.addEventListener('click', (e) => {
+                if (e.target.closest('button[onclick*="showPdfOverlay"]')) {
+                    clearTimeout(overlayTimer);
+                    overlayTimer = setTimeout(() => {
+                        hidePdfOverlay();
+                    }, 3000);
+                }
             });
         });
     </script>
