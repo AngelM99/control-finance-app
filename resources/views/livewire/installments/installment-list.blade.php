@@ -56,7 +56,7 @@
                                         <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Descripción / Compra</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Progreso</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Monto por Cuota</th>
-                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Primer Pago</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Último Pago</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estado</th>
                                         <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acciones</th>
                                     </tr>
@@ -96,9 +96,9 @@
                                             </td>
                                             <td class="align-middle text-center">
                                                 <p class="text-xs font-weight-bold mb-0">
-                                                    {{ $installment->first_payment_date?->format('d/m/Y') ?? 'N/A' }}
+                                                    {{ $installment->last_payment_date?->format('d/m/Y') ?? 'Sin pagos' }}
                                                 </p>
-                                                <p class="text-xxs text-secondary mb-0">Primer pago</p>
+                                                <p class="text-xxs text-secondary mb-0">Último pago</p>
                                             </td>
                                             <td class="align-middle text-center text-sm">
                                                 @if($installment->status === 'completed')
