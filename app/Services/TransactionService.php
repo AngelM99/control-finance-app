@@ -300,6 +300,11 @@ class TransactionService
     public function updateTransaction(Transaction $transaction, array $data): Transaction
     {
         return DB::transaction(function () use ($transaction, $data) {
+            // Guardar datos originales para buscar cuotas asociadas
+            $originalAmount = $transaction->amount;
+            $originalDate = $transaction->transaction_date;
+            $originalProductId = $transaction->financial_product_id;
+
             // Revertir el balance anterior
             $this->revertProductBalance($transaction);
 
@@ -319,6 +324,23 @@ class TransactionService
             $product = FinancialProduct::find($data['financial_product_id']);
             $this->validateCreditLimit($product, $data['amount']);
             $this->updateProductBalance($product, $data['transaction_type'], $data['amount']);
+
+            // Manejar actualización de cuotas para tarjetas de crédito/líneas de crédito
+            if ($data['transaction_type'] === 'purchase' && ($product->isCreditCard() || $product->isCreditLine())) {
+                // Buscar y eliminar cuotas anteriores asociadas a esta transacción
+                $oldInstallments = Installment::where('financial_product_id', $originalProductId)
+                    ->where('total_amount', $originalAmount)
+                    ->whereDate('purchase_date', $originalDate)
+                    ->get();
+
+                foreach ($oldInstallments as $oldInstallment) {
+                    $oldInstallment->delete();
+                }
+
+                // Crear nuevo plan de cuotas si se especificó
+                $installmentsCount = $data['installments_count'] ?? 1;
+                $this->createInstallmentPlan($transaction, array_merge($data, ['installments_count' => $installmentsCount]), $product);
+            }
 
             return $transaction->fresh();
         });

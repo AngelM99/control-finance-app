@@ -53,6 +53,19 @@ class TransactionForm extends Component
             $this->description = $this->transaction->description ?? '';
             $this->reference_number = $this->transaction->reference_number ?? '';
             $this->merchant = $this->transaction->merchant ?? '';
+
+            // Cargar datos de cuotas si existen
+            // Buscar cuotas asociadas a esta transacción
+            $installment = \App\Models\Installment::where('financial_product_id', $this->transaction->financial_product_id)
+                ->where('total_amount', $this->transaction->amount)
+                ->whereDate('purchase_date', $this->transaction->transaction_date)
+                ->where('status', \App\Models\Installment::STATUS_ACTIVE)
+                ->first();
+
+            if ($installment) {
+                $this->pay_in_installments = true;
+                $this->installments_count = $installment->installment_count;
+            }
         }
     }
 
