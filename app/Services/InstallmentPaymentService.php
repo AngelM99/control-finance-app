@@ -173,13 +173,96 @@ class InstallmentPaymentService
             return $remaining;
         }
 
-        // Si hay pagos parciales previos, completar la cuota actual
+        // Si hay pagos parciales previos, verificar si es significativo
         $partialAmount = $totalPaid % $installmentAmount;
+
         if ($partialAmount > 0) {
-            return $installmentAmount - $partialAmount;
+            $partialPercentage = ($partialAmount / $installmentAmount) * 100;
+            $remainingForCurrentInstallment = $installmentAmount - $partialAmount;
+
+            // Si el pago parcial es mayor al 90%, probablemente es un error de redondeo
+            // En ese caso, ignorarlo y sugerir una cuota completa nueva
+            if ($partialPercentage >= 90) {
+                // Sugerir una cuota completa, ignorando el pequeño error de centavos
+                return $installmentAmount;
+            }
+
+            // Si el pago parcial está entre 10% y 90%, sugerir completar la cuota actual
+            if ($partialPercentage >= 10) {
+                // Si el monto restante para completar la cuota es mayor al saldo total, usar el saldo
+                return min($remainingForCurrentInstallment, $remaining);
+            }
         }
 
         // Caso normal: sugerir el monto de una cuota completa
         return $installmentAmount;
+    }
+
+    /**
+     * Eliminar un pago específico del historial
+     *
+     * @param Installment $installment
+     * @param int $paymentIndex Índice del pago a eliminar en el array
+     * @return array Resultado de la operación
+     * @throws Exception
+     */
+    public function deletePayment(Installment $installment, int $paymentIndex): array
+    {
+        return DB::transaction(function () use ($installment, $paymentIndex) {
+            // Obtener el historial de pagos
+            $schedule = $installment->payment_schedule ?? ['payments' => []];
+            $payments = $schedule['payments'] ?? [];
+
+            // Validar que el índice existe
+            if (!isset($payments[$paymentIndex])) {
+                throw new Exception('El pago especificado no existe.');
+            }
+
+            // Obtener el pago a eliminar
+            $paymentToDelete = $payments[$paymentIndex];
+            $amountToReverse = $paymentToDelete['amount'];
+
+            // Eliminar el pago del array
+            array_splice($payments, $paymentIndex, 1);
+
+            // Recalcular el total pagado
+            $newTotalPaid = ($installment->total_paid ?? 0) - $amountToReverse;
+            $newRemaining = $installment->total_amount - $newTotalPaid;
+
+            // Recalcular cuotas completas pagadas
+            $installmentAmount = $installment->installment_amount;
+            $completedInstallments = floor($newTotalPaid / $installmentAmount);
+
+            // Actualizar el schedule con los pagos restantes
+            $schedule['payments'] = array_values($payments); // Re-indexar el array
+
+            // Actualizar el modelo
+            $installment->update([
+                'total_paid' => $newTotalPaid,
+                'current_installment' => $completedInstallments,
+                'payment_schedule' => $schedule,
+                'status' => $newRemaining >= $installment->total_amount ? Installment::STATUS_ACTIVE :
+                           ($newRemaining <= 0 ? Installment::STATUS_COMPLETED : Installment::STATUS_ACTIVE),
+            ]);
+
+            // Actualizar el saldo del producto financiero (aumentar la deuda)
+            $financialProduct = $installment->financialProduct;
+            if ($financialProduct) {
+                $newProductBalance = $financialProduct->current_balance + $amountToReverse;
+                $financialProduct->update([
+                    'current_balance' => $newProductBalance,
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'reversed_amount' => $amountToReverse,
+                'reversed_amount_dollars' => $amountToReverse / 100,
+                'new_total_paid' => $newTotalPaid,
+                'new_total_paid_dollars' => $newTotalPaid / 100,
+                'new_remaining' => $newRemaining,
+                'new_remaining_dollars' => $newRemaining / 100,
+            ];
+        });
     }
 }

@@ -49,8 +49,11 @@ class LenderForm extends Component
     protected function rules()
     {
         $documentRule = $this->lender
-            ? 'required|string|max:20|unique:lenders,document_id,' . $this->lender->id
-            : 'required|string|max:20|unique:lenders,document_id';
+            ? ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('lenders', 'document_id')
+                ->where('user_id', auth()->id())
+                ->ignore($this->lender->id)]
+            : ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('lenders', 'document_id')
+                ->where('user_id', auth()->id())];
 
         return [
             'full_name' => ['required', 'string', 'max:255'],

@@ -97,6 +97,8 @@
                     <th>Cuota</th>
                     <th>Vencimiento</th>
                     <th class="text-right">Monto</th>
+                    <th>Fecha de Pago</th>
+                    <th class="text-right">Monto Pagado</th>
                     <th style="text-align: center;">Estado</th>
                 </tr>
             </thead>
@@ -106,6 +108,20 @@
                     <td>{{ $due['number'] }}/{{ $due['total'] }}</td>
                     <td>{{ $due['due_date']->format('d/m/Y') }}</td>
                     <td class="text-right">S/ {{ number_format($due['installment_amount'] / 100, 2) }}</td>
+                    <td>
+                        @if($due['payment_date'] ?? null)
+                            {{ $due['payment_date']->format('d/m/Y') }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if($due['payment_amount'] ?? null)
+                            S/ {{ number_format($due['payment_amount'] / 100, 2) }}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td style="text-align: center;">
                         @if($due['is_paid'])
                             <span class="badge badge-success">Pagado</span>

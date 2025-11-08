@@ -91,6 +91,41 @@ class Installment extends Model
     }
 
     /**
+     * Get the current installment number (calculated from total paid).
+     * This is more accurate than the database field as it accounts for rounding errors.
+     */
+    public function getCurrentInstallmentAttribute(): int
+    {
+        // Usar el valor de la base de datos si existe y es mayor que 0
+        $dbValue = $this->attributes['current_installment'] ?? 0;
+
+        // Calcular basado en el monto pagado
+        $totalPaid = $this->attributes['total_paid'] ?? 0;
+        $installmentAmount = $this->attributes['installment_amount'] ?? 1;
+
+        if ($installmentAmount <= 0) {
+            return $dbValue;
+        }
+
+        // Calcular cuotas pagadas con tolerancia para errores de redondeo (99% de una cuota)
+        $calculatedInstallments = 0;
+        if ($totalPaid > 0) {
+            // Si el pago cubre al menos el 99% de una cuota, contarla como completa
+            $exactInstallments = $totalPaid / $installmentAmount;
+            $calculatedInstallments = floor($exactInstallments);
+
+            // Si hay un residuo mayor al 99% de una cuota, contar una más
+            $remainder = $exactInstallments - $calculatedInstallments;
+            if ($remainder >= 0.99) {
+                $calculatedInstallments++;
+            }
+        }
+
+        // Retornar el mayor entre el valor de BD y el calculado
+        return max($dbValue, $calculatedInstallments);
+    }
+
+    /**
      * Get the remaining installments count.
      */
     public function getRemainingInstallmentsAttribute(): int

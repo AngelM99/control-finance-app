@@ -124,6 +124,13 @@
                                                             <i class="fas fa-check-circle"></i> Pagado
                                                         </span>
                                                     @endif
+                                                    @if(($installment->payment_schedule['payments'] ?? []) && count($installment->payment_schedule['payments'] ?? []) > 0)
+                                                        <button wire:click="openHistoryModal({{ $installment->id }})"
+                                                                class="btn btn-sm btn-outline-info mb-0"
+                                                                title="Ver historial de pagos">
+                                                            <i class="fas fa-history"></i>
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
@@ -301,6 +308,110 @@
                     </button>
                     <button type="button" class="btn bg-gradient-success btn-sm" wire:click="processPayment">
                         <i class="fas fa-check me-1"></i>Registrar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- History Modal -->
+    @if($showHistoryModal && $selectedInstallment)
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.7); z-index: 9999; position: fixed; top: 0; left: 0; width: 100%; height: 100%;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="z-index: 10000;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history me-2"></i>Historial de Pagos
+                    </h5>
+                    <button type="button" class="btn-close" wire:click="closeHistoryModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Installment Details -->
+                    <div class="card card-body border mb-3">
+                        <h6 class="text-sm font-weight-bold mb-2">{{ $selectedInstallment->financialProduct?->name ?? 'N/A' }}</h6>
+                        <p class="text-xs text-secondary mb-1">{{ $selectedInstallment->description ?? 'Compra en cuotas' }}</p>
+                        <hr class="horizontal dark my-2">
+                        <div class="row">
+                            <div class="col-4">
+                                <p class="text-xs mb-1">Total:</p>
+                                <p class="text-sm font-weight-bold mb-0">S/ {{ number_format($selectedInstallment->total_amount / 100, 2) }}</p>
+                            </div>
+                            <div class="col-4">
+                                <p class="text-xs mb-1">Pagado:</p>
+                                <p class="text-sm font-weight-bold text-success mb-0">S/ {{ number_format(($selectedInstallment->total_paid ?? 0) / 100, 2) }}</p>
+                            </div>
+                            <div class="col-4">
+                                <p class="text-xs mb-1">Restante:</p>
+                                <p class="text-sm font-weight-bold text-warning mb-0">S/ {{ number_format($selectedInstallment->remaining_amount / 100, 2) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment History -->
+                    @php
+                        $payments = $selectedInstallment->payment_schedule['payments'] ?? [];
+                    @endphp
+
+                    @if(count($payments) > 0)
+                        <h6 class="text-sm font-weight-bold mb-3">Pagos Registrados ({{ count($payments) }})</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-items-center mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="text-xs">#</th>
+                                        <th class="text-xs">Fecha de Pago</th>
+                                        <th class="text-xs text-end">Monto Pagado</th>
+                                        <th class="text-xs text-end">Saldo Después</th>
+                                        <th class="text-xs">Registrado</th>
+                                        <th class="text-xs text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($payments as $index => $payment)
+                                    <tr>
+                                        <td class="text-xs">{{ $index + 1 }}</td>
+                                        <td class="text-xs">
+                                            <i class="fas fa-calendar-check text-success me-1"></i>
+                                            {{ \Carbon\Carbon::parse($payment['payment_date'])->format('d/m/Y') }}
+                                        </td>
+                                        <td class="text-xs text-end font-weight-bold text-success">
+                                            S/ {{ number_format($payment['amount_dollars'], 2) }}
+                                        </td>
+                                        <td class="text-xs text-end">
+                                            S/ {{ number_format($payment['remaining_after_dollars'], 2) }}
+                                        </td>
+                                        <td class="text-xs text-muted">
+                                            {{ \Carbon\Carbon::parse($payment['registered_at'])->format('d/m/Y H:i') }}
+                                        </td>
+                                        <td class="text-xs text-center">
+                                            <button wire:click="deletePayment({{ $index }})"
+                                                    wire:confirm="¿Está seguro de eliminar este pago de S/ {{ number_format($payment['amount_dollars'], 2) }}? Esta acción actualizará el saldo de la cuota."
+                                                    class="btn btn-sm btn-outline-danger mb-0"
+                                                    title="Eliminar pago">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-warning text-xs mt-3 mb-0">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Importante:</strong> Al eliminar un pago, se actualizará automáticamente el saldo de la cuota y del producto financiero.
+                        </div>
+                    @else
+                        <div class="alert alert-info text-center mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No hay pagos registrados para esta cuota.
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" wire:click="closeHistoryModal">
+                        <i class="fas fa-times me-1"></i>Cerrar
                     </button>
                 </div>
             </div>

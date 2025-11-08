@@ -152,6 +152,31 @@ class AccountStatementReport extends Component
                 // Verificar si esta cuota ya fue pagada
                 $isPaid = $i <= $paidInstallments;
 
+                // Buscar información de pagos relacionados a esta cuota
+                $paymentInfo = null;
+                if ($isPaid && !empty($payments)) {
+                    // Buscar el pago que corresponde a esta cuota (aproximadamente)
+                    // Si hay múltiples pagos, buscar el que está cerca de la fecha de vencimiento
+                    $relatedPayments = [];
+                    foreach ($payments as $payment) {
+                        $paymentDate = Carbon::parse($payment['payment_date']);
+                        // Considerar pagos realizados cerca de esta cuota (±45 días de la fecha de vencimiento)
+                        if (abs($paymentDate->diffInDays($dueDate)) <= 45) {
+                            $relatedPayments[] = $payment;
+                        }
+                    }
+
+                    // Si encontramos pagos relacionados, tomar el más cercano a la fecha de vencimiento
+                    if (!empty($relatedPayments)) {
+                        usort($relatedPayments, function($a, $b) use ($dueDate) {
+                            $diffA = abs(Carbon::parse($a['payment_date'])->diffInDays($dueDate));
+                            $diffB = abs(Carbon::parse($b['payment_date'])->diffInDays($dueDate));
+                            return $diffA - $diffB;
+                        });
+                        $paymentInfo = $relatedPayments[0];
+                    }
+                }
+
                 $dueInstallments[] = [
                     'number' => $i,
                     'total' => $totalInstallments,
@@ -159,6 +184,8 @@ class AccountStatementReport extends Component
                     'installment_amount' => $installmentAmount,
                     'is_paid' => $isPaid,
                     'status' => $isPaid ? 'paid' : ($dueDate->isPast() ? 'overdue' : 'pending'),
+                    'payment_date' => $paymentInfo ? Carbon::parse($paymentInfo['payment_date']) : null,
+                    'payment_amount' => $paymentInfo ? $paymentInfo['amount'] : null,
                 ];
             }
         }

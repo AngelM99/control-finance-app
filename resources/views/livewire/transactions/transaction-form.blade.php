@@ -59,7 +59,7 @@
                                 </label>
                                 <select class="form-select @error('lender_id') is-invalid @enderror"
                                         wire:model.defer="lender_id">
-                                    <option value="">Yo mismo (propietario)</option>
+                                    <option value="">Seleccionar prestamista</option>
                                     @foreach($lenders as $lender)
                                         <option value="{{ $lender->id }}">
                                             {{ $lender->full_name }} ({{ $lender->document_id }})
@@ -70,7 +70,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <small class="text-muted">
-                                    Deja en "Yo mismo" si tú realizaste la compra.
+                                    Selecciona el prestamista o usuario de tarjeta.
                                     <a href="{{ route('lenders.create') }}" wire:navigate class="text-primary">
                                         <i class="fas fa-plus"></i> Agregar prestamista
                                     </a>

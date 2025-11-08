@@ -186,6 +186,8 @@
                                                     <th class="text-xs">Cuota</th>
                                                     <th class="text-xs">Vencimiento</th>
                                                     <th class="text-xs text-end">Monto</th>
+                                                    <th class="text-xs">Fecha de Pago</th>
+                                                    <th class="text-xs text-end">Monto Pagado</th>
                                                     <th class="text-xs text-center">Estado</th>
                                                 </tr>
                                             </thead>
@@ -195,6 +197,21 @@
                                                     <td class="text-xs">{{ $due['number'] }}/{{ $due['total'] }}</td>
                                                     <td class="text-xs">{{ $due['due_date']->format('d/m/Y') }}</td>
                                                     <td class="text-xs text-end">S/ {{ number_format($due['installment_amount'] / 100, 2) }}</td>
+                                                    <td class="text-xs">
+                                                        @if($due['payment_date'])
+                                                            <i class="fas fa-calendar-check text-success me-1"></i>
+                                                            {{ $due['payment_date']->format('d/m/Y') }}
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-xs text-end">
+                                                        @if($due['payment_amount'])
+                                                            <span class="text-success">S/ {{ number_format($due['payment_amount'] / 100, 2) }}</span>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
                                                     <td class="text-xs text-center">
                                                         @if($due['is_paid'])
                                                             <span class="badge badge-sm bg-success">Pagado</span>

@@ -14,6 +14,7 @@ use Livewire\Attributes\Title;
 class InstallmentList extends Component
 {
     public $showPaymentModal = false;
+    public $showHistoryModal = false;
     public $selectedInstallment = null;
     public $paymentAmount = '';
     public $paymentDate = '';
@@ -92,6 +93,42 @@ class InstallmentList extends Component
             $this->dispatch('$refresh');
         } catch (\Exception $e) {
             $this->addError('paymentAmount', $e->getMessage());
+        }
+    }
+
+    public function openHistoryModal($installmentId)
+    {
+        try {
+            $this->selectedInstallment = Installment::where('id', $installmentId)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
+
+            $this->showHistoryModal = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al abrir el historial: ' . $e->getMessage());
+        }
+    }
+
+    public function closeHistoryModal()
+    {
+        $this->showHistoryModal = false;
+        $this->selectedInstallment = null;
+    }
+
+    public function deletePayment($paymentIndex)
+    {
+        try {
+            $paymentService = new InstallmentPaymentService();
+            $result = $paymentService->deletePayment($this->selectedInstallment, $paymentIndex);
+
+            session()->flash('success', 'Pago eliminado exitosamente. Saldo actualizado.');
+
+            // Recargar el installment
+            $this->selectedInstallment = Installment::find($this->selectedInstallment->id);
+
+            $this->dispatch('$refresh');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al eliminar el pago: ' . $e->getMessage());
         }
     }
 
