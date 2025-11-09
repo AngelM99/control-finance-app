@@ -57,14 +57,18 @@
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-uppercase font-weight-bold stats-title"
                                    data-bs-toggle="tooltip"
-                                   title="Saldo Total">Saldo Total</p>
-                                <h5 class="font-weight-bolder mb-0">
+                                   title="Patrimonio Neto (Activos - Pasivos)">Patrimonio Neto</p>
+                                <h5 class="font-weight-bolder mb-0 {{ $totalBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                     S/ {{ number_format($totalBalance / 100, 2) }}
                                 </h5>
+                                <p class="text-xs mb-0 text-secondary">
+                                    Activos: S/ {{ number_format($totalAssets / 100, 2) }}<br>
+                                    Deudas: S/ {{ number_format($totalLiabilities / 100, 2) }}
+                                </p>
                             </div>
                         </div>
                         <div class="col-4 text-end">
-                            <div class="icon icon-shape bg-gradient-info shadow border-radius-md">
+                            <div class="icon icon-shape bg-gradient-{{ $totalBalance >= 0 ? 'success' : 'danger' }} shadow border-radius-md">
                                 <i class="fas fa-wallet text-lg opacity-10"></i>
                             </div>
                         </div>

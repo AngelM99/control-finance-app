@@ -201,6 +201,7 @@ class SavingsAccountService
         return [
             'current_balance' => $product->current_balance,
             'current_balance_dollars' => $product->current_balance / 100,
+            'available_credit' => $product->current_balance, // Para cuentas de ahorro, el saldo disponible es el balance actual
             'interest_rate' => $product->interest_rate,
             'estimated_monthly_interest' => $estimatedMonthlyInterest,
             'estimated_monthly_interest_dollars' => $estimatedMonthlyInterest / 100,

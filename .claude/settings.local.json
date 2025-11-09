@@ -11,7 +11,9 @@
       "Bash(docker-compose logs:*)",
       "Bash(cp:*)",
       "Bash(php artisan:*)",
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(php:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

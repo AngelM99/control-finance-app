@@ -222,6 +222,7 @@ class LoanService
             'total_interest_dollars' => $totalInterest / 100,
             'current_balance' => $product->current_balance,
             'current_balance_dollars' => $product->current_balance / 100,
+            'available_credit' => 0, // Los préstamos no tienen crédito disponible
             'is_overdue' => $isOverdue,
             'days_overdue' => $daysOverdue,
             'penalty_interest' => $isOverdue ? $this->calculatePenaltyInterest($product, $daysOverdue) : 0,

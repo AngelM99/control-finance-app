@@ -17,6 +17,8 @@ class UserDashboard extends Component
     public $totalProducts = 0;
     public $activeProducts = 0;
     public $totalBalance = 0;
+    public $totalAssets = 0;
+    public $totalLiabilities = 0;
     public $totalCreditLimit = 0;
     public $recentTransactions = [];
     public $pendingInstallments = 0;
@@ -35,7 +37,23 @@ class UserDashboard extends Component
         $products = FinancialProduct::where('user_id', $userId)->get();
         $this->totalProducts = $products->count();
         $this->activeProducts = $products->where('is_active', true)->count();
-        $this->totalBalance = $products->sum('current_balance');
+
+        // Calcular activos (dinero a favor) y pasivos (deudas)
+        $this->totalAssets = 0;
+        $this->totalLiabilities = 0;
+
+        foreach ($products as $product) {
+            if ($product->isSavingsAccount() || $product->isDebitCard() || $product->isDigitalWallet()) {
+                // Activos: dinero que el usuario tiene
+                $this->totalAssets += $product->current_balance;
+            } elseif ($product->isCreditCard() || $product->isCreditLine() || $product->isLoan()) {
+                // Pasivos: dinero que el usuario debe
+                $this->totalLiabilities += $product->current_balance;
+            }
+        }
+
+        // Patrimonio neto = Activos - Pasivos
+        $this->totalBalance = $this->totalAssets - $this->totalLiabilities;
         $this->totalCreditLimit = $products->sum('credit_limit');
 
         // Load recent transactions (solo con productos válidos)
@@ -86,6 +104,7 @@ class UserDashboard extends Component
                 $summaryData['summary'] = [
                     'available_balance' => $product->current_balance,
                     'available_balance_dollars' => $product->current_balance / 100,
+                    'available_credit' => $product->current_balance, // Para tarjetas de débito, el saldo disponible es el balance actual
                 ];
             }
 
