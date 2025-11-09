@@ -138,8 +138,8 @@ class AccountStatementReport extends Component
         $payments = $installment->payment_schedule['payments'] ?? [];
         $totalPaid = $installment->total_paid ?? 0;
 
-        // Calcular cuántas cuotas se han pagado completamente
-        $paidInstallments = $installmentAmount > 0 ? floor($totalPaid / $installmentAmount) : 0;
+        // Usar el accessor del modelo que tiene tolerancia para errores de redondeo
+        $paidInstallments = $installment->current_installment;
 
         for ($i = 1; $i <= $totalInstallments; $i++) {
             // Calcular fecha de vencimiento

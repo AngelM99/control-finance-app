@@ -250,12 +250,9 @@ class TransactionReport extends Component
         $installmentAmount = $installment->installment_amount;
         $totalInstallments = $installment->installment_count;
 
-        // Calcular cuántas cuotas completas se han pagado
-        // Solo contar como cuota pagada si se ha pagado el monto completo de la cuota
-        $paidInstallments = 0;
-        if ($installmentAmount > 0 && $totalPaid > 0) {
-            $paidInstallments = floor($totalPaid / $installmentAmount);
-        }
+        // Calcular cuántas cuotas completas se han pagado usando el método centralizado
+        // Esto garantiza consistencia con el resto de la aplicación y tolera errores de redondeo
+        $paidInstallments = Installment::calculateCompletedInstallments($totalPaid, $installmentAmount);
 
         $percentage = $totalInstallments > 0 ? round(($paidInstallments / $totalInstallments) * 100) : 0;
 

@@ -99,27 +99,11 @@ class Installment extends Model
         // Usar el valor de la base de datos si existe y es mayor que 0
         $dbValue = $this->attributes['current_installment'] ?? 0;
 
-        // Calcular basado en el monto pagado
+        // Calcular basado en el monto pagado usando el método centralizado
         $totalPaid = $this->attributes['total_paid'] ?? 0;
         $installmentAmount = $this->attributes['installment_amount'] ?? 1;
 
-        if ($installmentAmount <= 0) {
-            return $dbValue;
-        }
-
-        // Calcular cuotas pagadas con tolerancia para errores de redondeo (99% de una cuota)
-        $calculatedInstallments = 0;
-        if ($totalPaid > 0) {
-            // Si el pago cubre al menos el 99% de una cuota, contarla como completa
-            $exactInstallments = $totalPaid / $installmentAmount;
-            $calculatedInstallments = floor($exactInstallments);
-
-            // Si hay un residuo mayor al 99% de una cuota, contar una más
-            $remainder = $exactInstallments - $calculatedInstallments;
-            if ($remainder >= 0.99) {
-                $calculatedInstallments++;
-            }
-        }
+        $calculatedInstallments = self::calculateCompletedInstallments($totalPaid, $installmentAmount);
 
         // Retornar el mayor entre el valor de BD y el calculado
         return max($dbValue, $calculatedInstallments);
@@ -209,5 +193,33 @@ class Installment extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', self::STATUS_COMPLETED);
+    }
+
+    /**
+     * Calcular cuántas cuotas completas se han pagado con tolerancia para errores de redondeo.
+     * Este es el método CENTRALIZADO que debe usarse en toda la aplicación.
+     *
+     * @param int $totalPaid Monto total pagado en centavos
+     * @param int $installmentAmount Monto de cada cuota en centavos
+     * @return int Número de cuotas completas pagadas
+     */
+    public static function calculateCompletedInstallments(int $totalPaid, int $installmentAmount): int
+    {
+        if ($installmentAmount <= 0 || $totalPaid <= 0) {
+            return 0;
+        }
+
+        // Calcular cuotas exactas
+        $exactInstallments = $totalPaid / $installmentAmount;
+        $completedInstallments = floor($exactInstallments);
+
+        // Si hay un residuo mayor al 99% de una cuota, contarla como completa
+        // Esto tolera errores de redondeo de centavos
+        $remainder = $exactInstallments - $completedInstallments;
+        if ($remainder >= 0.99) {
+            $completedInstallments++;
+        }
+
+        return (int) $completedInstallments;
     }
 }

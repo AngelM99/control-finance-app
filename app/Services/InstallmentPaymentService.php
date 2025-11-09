@@ -62,9 +62,9 @@ class InstallmentPaymentService
                 'registered_at' => now()->toDateTimeString(),
             ];
 
-            // Calcular cuántas cuotas completas se han pagado
+            // Calcular cuántas cuotas completas se han pagado usando el método centralizado
             $installmentAmount = $installment->installment_amount;
-            $completedInstallments = floor($newTotalPaid / $installmentAmount);
+            $completedInstallments = Installment::calculateCompletedInstallments($newTotalPaid, $installmentAmount);
 
             // Actualizar el modelo
             $installment->update([
@@ -133,7 +133,7 @@ class InstallmentPaymentService
         $remaining = $totalDebt - $totalPaid;
 
         $installmentAmount = $installment->installment_amount;
-        $completedInstallments = floor($totalPaid / $installmentAmount);
+        $completedInstallments = Installment::calculateCompletedInstallments($totalPaid, $installmentAmount);
         $partialAmount = $totalPaid % $installmentAmount;
 
         return [
@@ -229,9 +229,9 @@ class InstallmentPaymentService
             $newTotalPaid = ($installment->total_paid ?? 0) - $amountToReverse;
             $newRemaining = $installment->total_amount - $newTotalPaid;
 
-            // Recalcular cuotas completas pagadas
+            // Recalcular cuotas completas pagadas usando el método centralizado
             $installmentAmount = $installment->installment_amount;
-            $completedInstallments = floor($newTotalPaid / $installmentAmount);
+            $completedInstallments = Installment::calculateCompletedInstallments($newTotalPaid, $installmentAmount);
 
             // Actualizar el schedule con los pagos restantes
             $schedule['payments'] = array_values($payments); // Re-indexar el array
